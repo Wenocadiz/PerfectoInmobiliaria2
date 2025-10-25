@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tablas Mágicas — Práctica de Multiplicar (1–10)</title>
+<style>
+  :root{
+    --bg1:#fffaf0;
+    --bg2:#f0f9ff;
+    --card:#ffffff;
+    --ink:#1e293b;
+    --muted:#64748b;
+    --ok:#16a34a;
+    --bad:#ef4444;
+    --accent:#7c3aed;
+    --accent-2:#06b6d4;
+    --accent-3:#f59e0b;
+    --shadow: 0 10px 30px rgba(0,0,0,.12);
+    --radius: 20px;
+  }
+
+  /* Fondo alegre con degradado animado */
+  body{
+    margin:0;
+    font-family: "Nunito", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    color:var(--ink);
+    background: linear-gradient(120deg, #fef6e4, #dff7ff, #f3e8ff);
+    background-size: 200% 200%;
+    animation: floatBG 18s ease-in-out infinite;
+  }
+  @keyframes floatBG{
+    0%,100%{ background-position: 0% 50%; }
+    50%{ background-position: 100% 50%; }
+  }
+
+  .wrap{
+    max-width: 980px;
+    margin: clamp(16px, 5vw, 40px) auto;
+    padding: 0 16px 32px;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    justify-content:center;
+    margin: 8px 0 16px;
+  }
+  header .logo{
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1;
+  }
+  header h1{
+    font-size: clamp(22px, 3.3vw, 36px);
+    margin:0;
+  }
+  header .tag{
+    display:inline-block;
+    margin-left:6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #fff;
+    border: 2px dashed var(--accent-2);
+    font-size: .9rem;
+    color: var(--muted);
+  }
+
+  /* Tarjeta principal */
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: clamp(16px, 4vw, 28px);
+  }
+
+  /* Controles superiores */
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .group{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+  label{
+    font-weight:700;
+  }
+  select, button, input[type="number"]{
+    font: inherit;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+    background:#fff;
+  }
+  select:focus, button:focus, input:focus{ outline: 3px solid rgba(124,58,237,.2); }
+
+  .btn{
+    border: none;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .05s ease, box-shadow .15s ease;
+    box-shadow: 0 6px 0 rgba(0,0,0,.08);
+  }
+  .btn:active{ transform: translateY(2px); box-shadow: 0 4px 0 rgba(0,0,0,.06); }
+  .btn.primary{ background: linear-gradient(135deg, var(--accent), #a78bfa); color:#fff; }
+  .btn.secondary{ background: linear-gradient(135deg, var(--accent-2), #67e8f9); color:#0f172a; }
+  .btn.ghost{ background:#fff; border:2px dashed #cbd5e1; }
+
+  /* Zona de ejercicio */
+  .exercise{
+    display:grid;
+    grid-template-columns: 1.2fr .8fr;
+    gap: clamp(12px, 3vw, 24px);
+  }
+  @media (max-width: 780px){
+    .exercise{ grid-template-columns: 1fr; }
+  }
+  .story{
+    border: 3px solid #fde68a;
+    background: #fffbe6;
+    border-radius: 16px;
+    padding: clamp(12px, 2.5vw, 18px);
+    font-size: clamp(18px, 2.4vw, 22px);
+  }
+  .equation{
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content:center;
+    border: 3px solid #c7d2fe;
+    background: #eef2ff;
+    border-radius: 16px;
+    padding: 16px;
+    gap: 10px;
+  }
+  .equation .big{
+    font-size: clamp(40px, 7vw, 72px);
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+  .equation .small{
+    font-size: clamp(16px, 2.2vw, 20px);
+    color: var(--muted);
+  }
+
+  /* Input grande */
+  .answer-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top: 8px;
+  }
+  .answer{
+    width: 120px;
+    font-weight: 900;
+    font-size: clamp(26px, 4.5vw, 36px);
+    text-align: center;
+    border: 3px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 4px 8px;
+  }
+  .answer.ok{ border-color: var(--ok); background: #ecfdf5; }
+  .answer.bad{ border-color: var(--bad); background: #fef2f2; }
+  .feedback{
+    min-height: 28px;
+    font-weight:800;
+    font-size: clamp(18px, 2.4vw, 22px);
+  }
+  .feedback.ok{ color: var(--ok); }
+  .feedback.bad{ color: var(--bad); }
+
+  /* Teclado numérico */
+  .keypad{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:10px;
+    user-select:none;
+    margin-top: 10px;
+  }
+  .key{
+    background:#fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 6px;
+    text-align:center;
+    font-weight: 900;
+    font-size: 24px;
+    cursor:pointer;
+    transition: transform .05s ease, background .15s ease;
+    box-shadow: 0 5px 0 rgba(0,0,0,.06);
+  }
+  .key:active{ transform: translateY(2px); }
+  .key.action{ font-size: 16px; font-weight:700; }
+  .key.enter{ background: #dcfce7; border-color:#bbf7d0; }
+
+  /* Progreso */
+  .progress{
+    display:flex;
+    flex-wrap: wrap;
+    gap:8px;
+    align-items:center;
+    margin-top: 16px;
+  }
+  .pill{
+    width: 22px; height: 22px; border-radius: 50%;
+    background:#e2e8f0;
+    border:2px solid #cbd5e1;
+  }
+  .pill.on{ background: #fde68a; border-color: #f59e0b; }
+  .pill.ok{ background: #86efac; border-color:#16a34a; }
+  .pill.bad{ background: #fecaca; border-color:#ef4444; }
+
+  /* Consejos */
+  details.tips{
+    margin-top: 14px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 8px 12px;
+  }
+
+  /* Confetti */
+  .confetti{
+    position: fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .confetti i{
+    position:absolute;
+    width: 10px; height: 14px;
+    background: var(--accent);
+    transform: translateY(-100vh) rotate(0deg);
+    animation: drop 1.5s ease-in forwards;
+    border-radius: 2px;
+    opacity:.95;
+  }
+  @keyframes drop{
+    to{ transform: translateY(105vh) rotate(720deg); opacity: 1; }
+  }
+
+  /* Animaciones pequeñas */
+  .shake{ animation: shake .4s ease; }
+  @keyframes shake{
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+
+  footer{
+    text-align:center;
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: .95rem;
+  }
+  .link-like{
+    color: var(--accent);
+    font-weight:800;
+    text-decoration: underline wavy;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">🧮✨</div>
+      <h1>Tablas Mágicas <span class="tag">Practica del 1 al 10</span></h1>
+    </header>
+
+    <div class="card" role="region" aria-label="Juego de multiplicaciones">
+      <div class="controls">
+        <div class="group">
+          <label for="tablaSel">Tabla</label>
+          <select id="tablaSel" aria-label="Selecciona una tabla">
+            <option value="all" selected>Todas (1–10)</option>
+          </select>
+          <label for="rondasSel">Preguntas</label>
+          <select id="rondasSel" aria-label="Selecciona número de preguntas">
+            <option>5</option>
+            <option selected>10</option>
+            <option>15</option>
+          </select>
+        </div>
+        <div class="group">
+          <button id="btnNueva" class="btn ghost" title="Nueva partida">🔄 Nueva</button>
+          <button id="btnAyuda" class="btn secondary" title="Ver consejos">💡 Consejos</button>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="story" id="story" aria-live="polite">
+          <!-- Historia divertida auto-generada aquí -->
+        </div>
+
+        <div class="equation" aria-live="polite">
+          <div class="small">Resuelve:</div>
+          <div class="big" id="eq">3 × 4 = ?</div>
+
+          <div class="answer-row">
+            <input id="answer" class="answer" type="number" inputmode="numeric" pattern="[0-9]*" aria-label="Escribe tu respuesta" />
+            <button id="btnCheck" class="btn primary">✔ Comprobar</button>
+            <button id="btnNext" class="btn secondary" disabled>➡ Siguiente</button>
+          </div>
+
+          <div id="feedback" class="feedback" aria-live="assertive"></div>
+
+          <div class="keypad" aria-hidden="false" role="group" aria-label="Teclado numérico">
+            <!-- Teclas generadas por JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="progress" id="progress" aria-label="Progreso">
+        <!-- Píldoras de progreso -->
+      </div>
+
+      <details class="tips" id="tips">
+        <summary><strong>Consejos y trucos</strong></summary>
+        <ul>
+          <li>Intercambiar no cambia el resultado: <strong>a × b = b × a</strong>.</li>
+          <li>Multiplicar por 10: añade un <strong>0</strong> al número (p. ej. 7×10=70).</li>
+          <li>Multiplicar por 5: el resultado termina en <strong>0 o 5</strong>.</li>
+          <li>Multiplicar por 9: suma de dígitos = <strong>9</strong> (p. ej. 9×4=36 ⇒ 3+6=9).</li>
+          <li>Doblar y volver a doblar ayuda con 4, 8… (p. ej. 3×4 = (3×2)×2).</li>
+        </ul>
+      </details>
+    </div>
+
+    <footer>
+      Hecho con 💜 para peques curiosos. <span class="link-like" id="toggleModo">Cambiar a modo alto contraste</span>
+    </footer>
+  </div>
+
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<script>
+(() => {
+  // ====== Datos divertidos ======
+  const ANIMALES = [
+    {emoji:"🦊", nombre:"zorritos"},
+    {emoji:"🐱", nombre:"gatitos"},
+    {emoji:"🐶", nombre:"perritos"},
+    {emoji:"🐼", nombre:"pandas"},
+    {emoji:"🐵", nombre:"monitos"},
+    {emoji:"🦄", nombre:"unicornios"},
+    {emoji:"🐸", nombre:"ranas"},
+    {emoji:"🐯", nombre:"tigres"},
+    {emoji:"🐧", nombre:"pingüinos"},
+    {emoji:"🐢", nombre:"tortugas"},
+    {emoji:"🐤", nombre:"pollitos"},
+    {emoji:"🐰", nombre:"conejitos"}
+  ];
+  const OBJETOS = ["sombreros 🎩", "globos 🎈", "estrellas ⭐", "galletas 🍪", "libros 📚", "flores 🌼", "pelotas ⚽", "pinceles 🎨", "cohetes 🚀", "caramelos 🍬"];
+
+  // Rellena selector de tablas
+  const tablaSel = document.getElementById("tablaSel");
+  for(let i=1;i<=10;i++){
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = `Tabla del ${i}`;
+    tablaSel.appendChild(opt);
+  }
+
+  // ====== Estado del juego ======
+  const state = {
+    a: 0, b: 0, // factores
+    correcto: 0,
+    ronda: 0,
+    rondasTotal: Number(document.getElementById("rondasSel").value),
+    historial: [], // true/false por pregunta
+    bloqueado: false,
+  };
+
+  // ====== DOM ======
+  const story = document.getElementById("story");
+  const eq = document.getElementById("eq");
+  const input = document.getElementById("answer");
+  const feedback = document.getElementById("feedback");
+  const progress = document.getElementById("progress");
+  const btnCheck = document.getElementById("btnCheck");
+  const btnNext = document.getElementById("btnNext");
+  const btnNueva = document.getElementById("btnNueva");
+  const btnAyuda = document.getElementById("btnAyuda");
+  const rondasSel = document.getElementById("rondasSel");
+  const tips = document.getElementById("tips");
+  const confetti = document.getElementById("confetti");
+  const toggleModo = document.getElementById("toggleModo");
+
+  // ====== Utilidades ======
+  const rand = (min, max) => Math.floor(Math.random()*(max-min+1))+min;
+  const pick = arr => arr[rand(0, arr.length-1)];
+
+  function nuevaHistoria(a,b){
+    const herd = pick(ANIMALES);
+    const obj = pick(OBJETOS);
+    const quien = rand(0,1) ? "cada" : "en cada";
+    const texto = `${herd.emoji} ¡Aventura! Hay <b>${a} ${herd.nombre}</b> y ${quien} uno hay <b>${b} ${obj}</b>. <br>¿Cuántos ${obj} hay en total?`;
+    return texto;
+  }
+
+  function actualizarEq(a,b){
+    eq.textContent = `${a} × ${b} = ?`;
+  }
+
+  function construirProgreso(){
+    progress.innerHTML = "";
+    for(let i=0;i<state.rondasTotal;i++){
+      const d = document.createElement("div");
+      d.className = "pill" + (i<state.ronda ? " on" : "");
+      if(i<state.historial.length){
+        d.classList.remove("on");
+        d.classList.add(state.historial[i] ? "ok" : "bad");
+      }
+      progress.appendChild(d);
+    }
+  }
+
+  // Confetti simple
+  function lanzarConfetti(n=120){
+    confetti.innerHTML = "";
+    for(let i=0;i<n;i++){
+      const p = document.createElement("i");
+      const left = Math.random()*100;
+      const delay = Math.random()*0.6;
+      const huePick = [ "var(--accent)", "var(--accent-2)", "var(--accent-3)" ][rand(0,2)];
+      p.style.left = left+"%";
+      p.style.background = huePick;
+      p.style.animationDelay = delay+"s";
+      p.style.transform = `translateY(-100vh) rotate(${rand(0,360)}deg)`;
+      confetti.appendChild(p);
+    }
+    setTimeout(()=> confetti.innerHTML="", 1700);
+  }
+
+  // ====== Teclado numérico ======
+  const keypad = document.querySelector(".keypad");
+  const keysLayout = ["7","8","9","4","5","6","1","2","3","⌫","0","↲"];
+  keysLayout.forEach(k=>{
+    const btn = document.createElement("button");
+    btn.type="button";
+    btn.className = "key" + (k==="⌫"||k==="↲" ? " action" : "");
+    if(k==="↲") btn.classList.add("enter");
+    btn.textContent = k;
+    btn.addEventListener("click", ()=>{
+      if(k==="⌫"){ input.value = input.value.slice(0,-1); input.focus(); return; }
+      if(k==="↲"){ comprobar(); return; }
+      if(input.value.length < 3){ input.value += k; input.focus(); }
+    });
+    keypad.appendChild(btn);
+  });
+
+  // ====== Lógica principal ======
+  function nuevaPregunta(){
+    state.bloqueado = false;
+    btnNext.disabled = true;
+    btnCheck.disabled = false;
+    feedback.textContent = "";
+    feedback.className = "feedback";
+    input.classList.remove("ok","bad");
+    input.value = "";
+    input.focus();
+
+    const tablaPick = tablaSel.value === "all" ? rand(1,10) : Number(tablaSel.value);
+    const otro = rand(1,10);
+    // Mezcla aleatoria para no fijar siempre a*b en orden
+    if(Math.random() < .5){ state.a = tablaPick; state.b = otro; }
+    else{ state.a = otro; state.b = tablaPick; }
+
+    story.innerHTML = nuevaHistoria(state.a, state.b);
+    actualizarEq(state.a, state.b);
+    construirProgreso();
+  }
+
+  function terminarRonda(){
+    const buenas = state.historial.filter(Boolean).length;
+    const total = state.rondasTotal;
+    const msg = buenas === total
+      ? `🎉 ¡Perfecto! Respondiste todas ${total} correctamente.`
+      : `¡Bien hecho! Acertaste ${buenas} de ${total}.`;
+
+    feedback.textContent = msg;
+    feedback.className = "feedback ok";
+    lanzarConfetti(160);
+    btnNext.disabled = true;
+    btnCheck.disabled = true;
+  }
+
+  function comprobar(){
+    if(state.bloqueado) return;
+    const val = Number(input.value);
+    if(isNaN(val) || input.value.trim()===""){
+      input.classList.add("bad","shake");
+      setTimeout(()=> input.classList.remove("shake"), 400);
+      feedback.textContent = "Escribe tu respuesta 🤓";
+      feedback.className = "feedback";
+      return;
+    }
+    const correcto = state.a * state.b;
+    const esOk = (val === correcto);
+    state.historial.push(esOk);
+    state.ronda++;
+
+    input.classList.toggle("ok", esOk);
+    input.classList.toggle("bad", !esOk);
+    if(esOk){
+      feedback.textContent = "¡Correcto! 🌟";
+      feedback.className = "feedback ok";
+    }else{
+      feedback.innerHTML = `Casi... La respuesta es <b>${correcto}</b>. Pista: ${state.a}×${state.b} = ${Array(state.b).fill(state.a).join(" + ")}.`;
+      feedback.className = "feedback bad";
+    }
+    construirProgreso();
+
+    // Mini confetti por acierto
+    if(esOk) lanzarConfetti(60);
+
+    state.bloqueado = true;
+    btnCheck.disabled = true;
+    btnNext.disabled = false;
+
+    // Fin de ronda
+    if(state.ronda >= state.rondasTotal){
+      terminarRonda();
+    }
+  }
+
+  function nuevaPartida(){
+    state.correcto = 0;
+    state.ronda = 0;
+    state.rondasTotal = Number(rondasSel.value);
+    state.historial = [];
+    construirProgreso();
+    nuevaPregunta();
+  }
+
+  // ====== Eventos ======
+  btnCheck.addEventListener("click", comprobar);
+  btnNext.addEventListener("click", ()=> {
+    if(state.ronda < state.rondasTotal) nuevaPregunta();
+  });
+  btnNueva.addEventListener("click", nuevaPartida);
+  rondasSel.addEventListener("change", nuevaPartida);
+  tablaSel.addEventListener("change", nuevaPartida);
+  btnAyuda.addEventListener("click", ()=> tips.open = !tips.open);
+
+  // Teclado físico
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){ e.preventDefault(); comprobar(); }
+    if(e.key === "Escape"){ e.preventDefault(); input.value=""; }
+  });
+
+  // Alto contraste
+  let altoContraste = false;
+  toggleModo.addEventListener("click", ()=>{
+    altoContraste = !altoContraste;
+    document.body.style.filter = altoContraste ? "contrast(1.15) saturate(1.3)" : "none";
+    toggleModo.textContent = altoContraste ? "Volver a colores suaves" : "Cambiar a modo alto contraste";
+  });
+
+  // ====== Inicio ======
+  nuevaPartida();
+})();
+</script>
+</body>
+</html>
